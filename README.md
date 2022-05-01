@@ -1,5 +1,5 @@
 # ufsc-concurrent-computing
-Repository created with the objective of sharing programs developed in the Concurrent Programming course taught by professor Dr. Giovani Gracioli.
+Repository created with the objective of sharing programs developed in the Concurrent Programming course taught by professor Dr. Márcio Castro.
 
 
 Notes about the classes are in the [Wiki](https://github.com/larissajusten/ufsc-concurrent-computing/wiki).
