@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "worker_gate.h": "c",
+        "globals.h": "c",
+        "student.h": "c",
+        "queue.h": "c",
+        "chef.h": "c",
+        "semaphore.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}
