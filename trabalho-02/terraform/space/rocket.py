@@ -23,10 +23,7 @@ class Rocket:
         pass
     
     def reset_moons_status(self):
-        globals.get_rocket_to_moon_mutex().acquire()
         globals.set_rocket_to_moon(False)
-        globals.get_rocket_to_moon_mutex().release()
-        
                          
 
     def voyage(self, planet): # Permitida a alteração (com ressalvas) - [viagem]
@@ -38,23 +35,15 @@ class Rocket:
         if self.do_we_have_a_problem():
             return
 
-        print("Antes da lua")
         # Se o foguete está indo para a lua
         if to_moon:
             # diz que foguete está indo para lua
-            print("Antes do foguete pra lua")
-            globals.get_rocket_to_moon_mutex().acquire()
-            print("Dentro do foguete pra lua")
             globals.set_rocket_to_moon(True)
-            globals.get_rocket_to_moon_mutex().release()
-            print("Fora do foguete pra lua")
 
             sleep(1) # Simula tempo de viagem para lua (4 dias)
             print(f"[CARGO] - The {self.name} ROCKET reached the MOON")
-            globals.get_moon_mutex().acquire()
             self._set_moon_resources(planet)
             self.reset_moons_status()
-            globals.get_moon_mutex().release()
             return
 
         self.simulation_time_voyage(planet)

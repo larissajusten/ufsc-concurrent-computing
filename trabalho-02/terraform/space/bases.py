@@ -135,30 +135,31 @@ class SpaceBase(Thread):
                     self.refuel_oil()
 
                 if self.rockets < self.constraints[2]:
-                    with globals.get_rockets_executer() as rockets_executer:
-                        # Prioridade de envio de foguete é para a Lua
-                        with globals.get_moon_mutex() and globals.get_rocket_to_moon_mutex():
+                    rockets_executer = globals.get_rockets_executer()
+                    # Prioridade de envio de foguete é para a Lua
+                    with globals.get_moon_mutex():
+                        with globals.get_rocket_to_moon_mutex():
                             # Se a lua precisa de recursos, mas nenhum foguete foi enviado, manda foguete
-                            if globals.get_moon_needs_resources() and globals.get_rocket_to_moon() is None:
-                                if self._send_rocket_to_moon(rockets_executer):
-                                    self.wait_next_launch()
-                                continue
-                            else: # Se a lua não precisa de recursos, pode enviar foguete normalmente
-                                print("Pode enviar foguete normalmente, Já tem foguete pra lua")
-                                        
-                        # Envia foguetes para alvos de terraformação
-                        rocket_to_launch = choice(['DRAGON', 'FALCON'])
-                        if self._send_rocket_terraform(rocket_to_launch, rockets_executer):
-                            self.wait_next_launch() 
+                            if globals.get_moon_needs_resources() != [0,0] and not(globals.get_rocket_to_moon()):
+                                self._send_rocket_to_moon(rockets_executer)
+
+                            #else: # Se a lua não precisa de recursos, pode enviar foguete normalmente
+                            #    print(f"Pode enviar foguete normalmente, Já tem foguete pra lua, {globals.get_moon_needs_resources()},{globals.get_rocket_to_moon()}")
+                                    
+                    # Envia foguetes para alvos de terraformação
+                    rocket_to_launch = choice(['DRAGON', 'FALCON'])
+                    self._send_rocket_terraform(rocket_to_launch, rockets_executer)
+
+                    self.wait_next_launch()
 
             else:
                 # Se a Base lunar não tiver recursos necessários pra lançar foguetes Dragon e/ou Falcon e criar ogivas,
                 # seta que ela precisa de recursos
                 with globals.get_moon_mutex():
-                    if self.uranium < self.constraints[0] and self.fuel < self.constraints[1]:
-                        globals.set_moon_needs_resources(True)
+                    if self.uranium < self.constraints[0] or self.fuel < self.constraints[1]:
+                        globals.set_moon_needs_resources(self.constraints[0] - self.uranium, self.constraints[1] - self.fuel)
                     else:
-                        globals.set_moon_needs_resources(False)
+                        globals.set_moon_needs_resources(0,0)
             
 
     #########
@@ -186,13 +187,13 @@ class SpaceBase(Thread):
             rocket_lion = Rocket('LION')
 
             # Adiciona carga no foguete e remove carga da base
-            rocket_lion.fuel_cargo = 120
-            rocket_lion.uranium_cargo = 75
+            rocket_lion.fuel_cargo = 120 # TODO verificar quanto lua precisa e verificar quanto tenho
+            rocket_lion.uranium_cargo = 75 # TODO verificar quanto lua precisa e verificar quanto tenho
             self.fuel -= 120
             self.uranium -= 75
+
             base = globals.get_bases_ref()
-            a = rockets_executer.submit(rocket_lion.launch(self, base['moon']))
-            print(a.result())
+            rockets_executer.submit(rocket_lion.launch(self, base['moon']))
             self.rockets -= 1
             return True
         else:
@@ -206,8 +207,7 @@ class SpaceBase(Thread):
             target = choice(['mars', 'io', 'ganimedes', 'europa'])
             print(f'🚀 - [{self.name}] → [{target.upper()}]')
             planets = globals.get_planets_ref()
-            a = rockets_executer.submit(rocket.launch, self, planets[target])
-            print(a.result())
+            rockets_executer.submit(rocket.launch(self, planets[target]))
             self.rockets -= 1
             return True
         else:

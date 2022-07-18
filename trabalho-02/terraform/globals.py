@@ -123,15 +123,15 @@ def get_oil_mutex():
 M_rocket_to_moon = Lock()
 rocket_to_moon = False
 M_lock_moon = Lock()
-moon_needs_resources = True
+moon_needs_resources = [-1,-1]
 
 def get_moon_mutex():
     global M_lock_moon
     return M_lock_moon
 
-def set_moon_needs_resources(flag):
+def set_moon_needs_resources(uranium, fuel):
     global moon_needs_resources
-    moon_needs_resources = flag
+    moon_needs_resources = [uranium, fuel]
 
 def get_moon_needs_resources():
     global moon_needs_resources
