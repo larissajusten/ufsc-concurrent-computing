@@ -19,8 +19,9 @@ class SpaceBase(Thread):
 
 
     def print_space_base_info(self):
+        globals.acquire_print()
         print(f"🔭 - [{self.name}] → 🪨  {self.uranium}/{self.constraints[0]} URANIUM  ⛽ {self.fuel}/{self.constraints[1]}  🚀 {self.rockets}/{self.constraints[2]}")
-
+        globals.release_print()
 
     # create_rocket(self, rocket_name)
     def base_rocket_resources(self, rocket_name):
@@ -36,6 +37,7 @@ class SpaceBase(Thread):
                 if self.uranium >= 35 and self.fuel >= fuel_to_consume:
                     self.uranium = self.uranium - 35
                     self.fuel = self.fuel - fuel_to_consume
+                    return True
 
             case 'FALCON':
                 if self.name == 'MOON':
@@ -48,6 +50,7 @@ class SpaceBase(Thread):
                 if self.uranium >= 35 and self.fuel >= fuel_to_consume:
                     self.uranium = self.uranium - 35
                     self.fuel = self.fuel - fuel_to_consume
+                    return True
 
             case 'LION':
                 # ERRADO: Lion não precisa criar ogiva nuclear com 35 unidades de uranio
@@ -63,8 +66,11 @@ class SpaceBase(Thread):
                 if self.uranium >= 35 and self.fuel >= fuel_to_consume:
                     self.uranium = self.uranium - 35
                     self.fuel = self.fuel - fuel_to_consume
+                    return True
             case _:
                 print("Invalid rocket name")
+            
+        return False
 
     def fill_moon_resources(self,uranium, fuel):
         self.uranium += uranium
@@ -112,15 +118,16 @@ class SpaceBase(Thread):
 
 
     def run(self):
-        globals.acquire_print()
         self.print_space_base_info()
-        globals.release_print()
 
         while(globals.get_release_system() == False):
             pass
+
         while(True):
+            self.print_space_base_info()
+
             # Se o base não for a Base lunar (self = Alcantara / Moscou / Canaveral),
-            #   a base minera recursos
+            # a base minera recursos
             if not self.name == 'MOON':
                 if self.uranium <= self.constraints[0]:
                     self.refuel_uranium()
@@ -130,24 +137,29 @@ class SpaceBase(Thread):
                 if self.rockets < self.constraints[2]:
                     with globals.get_rockets_executer() as rockets_executer:
                         # Prioridade de envio de foguete é para a Lua
-                        lock_moon = globals.get_moon_mutex()
-                        with lock_moon:
-                            if not globals.get_moon_has_resources():
-                                self._send_rocket_to_moon(rockets_executer)
-                        
+                        with globals.get_moon_mutex() and globals.get_rocket_to_moon_mutex():
+                            # Se a lua precisa de recursos, mas nenhum foguete foi enviado, manda foguete
+                            if globals.get_moon_needs_resources() and globals.get_rocket_to_moon() is None:
+                                if self._send_rocket_to_moon(rockets_executer):
+                                    self.wait_next_launch()
+                                continue
+                            else: # Se a lua não precisa de recursos, pode enviar foguete normalmente
+                                print("Pode enviar foguete normalmente, Já tem foguete pra lua")
+                                        
                         # Envia foguetes para alvos de terraformação
                         rocket_to_launch = choice(['DRAGON', 'FALCON'])
-                        self._send_rocket_terraform(rocket_to_launch, rockets_executer)
-
+                        if self._send_rocket_terraform(rocket_to_launch, rockets_executer):
+                            self.wait_next_launch() 
 
             else:
                 # Se a Base lunar não tiver recursos necessários pra lançar foguetes Dragon e/ou Falcon e criar ogivas,
-                #   seta que ela precisa de recursos
-                lock_moon = globals.get_moon_mutex()
-                with lock_moon:
-                    if self.uranium < 35 and self.fuel < 90:
-                        globals.set_moon_has_resources(False)
-
+                # seta que ela precisa de recursos
+                with globals.get_moon_mutex():
+                    if self.uranium < self.constraints[0] and self.fuel < self.constraints[1]:
+                        globals.set_moon_needs_resources(True)
+                    else:
+                        globals.set_moon_needs_resources(False)
+            
 
     #########
     # UTILS #
@@ -155,6 +167,8 @@ class SpaceBase(Thread):
 
     def _has_unities(self, type): return type.unities > 0
     
+    def wait_next_launch(self):
+        sleep(0.1) # Tempo de espera para poder lançar outro foguete
 
     # LION -> MOON #
     def _has_resources_to_launch(self) -> bool:
@@ -165,28 +179,36 @@ class SpaceBase(Thread):
         return (self.fuel > (115+120) or self.fuel > (100+120)) and self.uranium > 75
 
     def _send_rocket_to_moon(self, rockets_executer) -> None:
-        if self._has_resources_to_launch():
-            self.base_rocket_resources('LION')
+        if self.base_rocket_resources('LION'):
+            print(f'🚀 - [{self.name}] → [MOON]')
+            
             self.rockets += 1
             rocket_lion = Rocket('LION')
+
             # Adiciona carga no foguete e remove carga da base
             rocket_lion.fuel_cargo = 120
             rocket_lion.uranium_cargo = 75
             self.fuel -= 120
             self.uranium -= 75
-            bases = globals.get_bases_ref()
-            rockets_executer.submit(rocket_lion.launch(self, bases['moon']))
+            base = globals.get_bases_ref()
+            a = rockets_executer.submit(rocket_lion.launch(self, base['moon']))
+            print(a.result())
             self.rockets -= 1
-            sleep(0.1)
+            return True
+        else:
+            return False
 
     # FALCON/DRAGON -> PLANET #
     def _send_rocket_terraform(self, rocket_type, rockets_executer):
-        if self._has_resources_to_launch():
-            self.base_rocket_resources(rocket_type)
+        if self.base_rocket_resources(rocket_type):
             self.rockets += 1
             rocket = Rocket(rocket_type)
             target = choice(['mars', 'io', 'ganimedes', 'europa'])
+            print(f'🚀 - [{self.name}] → [{target.upper()}]')
             planets = globals.get_planets_ref()
-            rockets_executer.submit(rocket.launch(self, planets[target]))
+            a = rockets_executer.submit(rocket.launch, self, planets[target])
+            print(a.result())
             self.rockets -= 1
-            sleep(0.1)
+            return True
+        else:
+            return False

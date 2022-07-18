@@ -22,15 +22,39 @@ class Rocket:
         print(f"[EXPLOSION] - The {self.name} ROCKET reached the planet {planet.name} on South Pole")
         pass
     
-    def voyage(self, planet): # Permitida a alteração (com ressalvas) - [viagem]
-        if self.do_we_have_a_problem(): return
+    def reset_moons_status(self):
+        globals.get_rocket_to_moon_mutex().acquire()
+        globals.set_rocket_to_moon(False)
+        globals.get_rocket_to_moon_mutex().release()
+        
+                         
 
-        if planet == 'MOON' and self.name == 'LION':
-            sleep(0.005) # Simula tempo de viagem para lua (4 dias)
+    def voyage(self, planet): # Permitida a alteração (com ressalvas) - [viagem]
+        
+        # Variavel que verifica se está indo para a lua
+        to_moon = (planet.name == 'MOON' and self.name == 'LION')
+
+        # Se teve algum problema na viagem, retorna Nulo porque a viagem falhou
+        if self.do_we_have_a_problem():
+            return
+
+        print("Antes da lua")
+        # Se o foguete está indo para a lua
+        if to_moon:
+            # diz que foguete está indo para lua
+            print("Antes do foguete pra lua")
+            globals.get_rocket_to_moon_mutex().acquire()
+            print("Dentro do foguete pra lua")
+            globals.set_rocket_to_moon(True)
+            globals.get_rocket_to_moon_mutex().release()
+            print("Fora do foguete pra lua")
+
+            sleep(1) # Simula tempo de viagem para lua (4 dias)
             print(f"[CARGO] - The {self.name} ROCKET reached the MOON")
-            with globals.get_moon_mutex():
-                globals.set_moon_has_resources(True)
-                self._set_moon_resources(planet)
+            globals.get_moon_mutex().acquire()
+            self._set_moon_resources(planet)
+            self.reset_moons_status()
+            globals.get_moon_mutex().release()
             return
 
         self.simulation_time_voyage(planet)
@@ -38,6 +62,7 @@ class Rocket:
 
     def _set_moon_resources(self, planet_or_base):
         planet_or_base.fill_moon_resources(self.uranium_cargo, self.fuel_cargo)
+        planet_or_base.print_space_base_info()
         self.uranium_cargo = 0
         self.fuel_cargo = 0
 

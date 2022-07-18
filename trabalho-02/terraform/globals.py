@@ -119,28 +119,39 @@ def get_oil_mutex():
     return lock_oil
 
 
-lock_moon = Lock()
+### Variaveis globais para o controle do carregamento para a Lua
+M_rocket_to_moon = Lock()
+rocket_to_moon = False
+M_lock_moon = Lock()
+moon_needs_resources = True
 
 def get_moon_mutex():
-    global lock_moon
-    return lock_moon
+    global M_lock_moon
+    return M_lock_moon
+
+def set_moon_needs_resources(flag):
+    global moon_needs_resources
+    moon_needs_resources = flag
+
+def get_moon_needs_resources():
+    global moon_needs_resources
+    return moon_needs_resources
+
+def get_rocket_to_moon_mutex():
+    global M_rocket_to_moon
+    return M_rocket_to_moon
+
+def get_rocket_to_moon():
+    global rocket_to_moon
+    return rocket_to_moon
+
+def set_rocket_to_moon(rocket):
+    global rocket_to_moon
+    rocket_to_moon = rocket
 
 
-moon_resources = False
-
-
-def set_moon_has_resources(has_resources):
-    global moon_resources
-    moon_resources = has_resources
-
-
-def get_moon_has_resources():
-    global moon_resources
-    return moon_resources
-
-
-rockets_executer = ThreadPoolExecutor()
-
+### Variaveis globais para o controle dos foguetes
+rockets_executer = ThreadPoolExecutor(30)
 
 def get_rockets_executer():
     global rockets_executer
