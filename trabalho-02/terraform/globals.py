@@ -62,3 +62,15 @@ def set_simulation_time(time):
 def get_simulation_time():
     global simulation_time
     return simulation_time
+
+lock_uranium = Lock()
+lock_oil = Lock()
+
+def get_uranium_mutex():
+    global lock_uranium
+    return lock_uranium
+
+def get_oil_mutex():
+    global lock_oil
+    return lock_oil
+
