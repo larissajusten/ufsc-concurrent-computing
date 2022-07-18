@@ -74,7 +74,6 @@ class SpaceBase(Thread):
                 self.fuel += oil_refuel
                 oil.unities -= oil_refuel
 
-
     def refuel_uranium(self):
         lock_uranium = globals.get_uranium_mutex()
         mines = globals.get_mines_ref()
@@ -103,14 +102,13 @@ class SpaceBase(Thread):
 
         while(globals.get_release_system() == False):
             pass
-
         while(True):
             # Se o base não for a Base lunar (self = Alcantara / Moscou / Canaveral),
             #   a base minera recursos
             if not self.name == 'MOON':
-                if not self.uranium <= self.constraints[0]:
+                if self.uranium <= self.constraints[0]:
                     self.refuel_uranium()
-                if not self.fuel <= self.constraints[1]:
+                if self.fuel <= self.constraints[1]:
                     self.refuel_oil()
 
                 if self.rockets < self.constraints[2]:
@@ -146,6 +144,7 @@ class SpaceBase(Thread):
         # Cado/Alcantara gastam 115 + 120 de gasolina para a carga
         # Moscou gasta 100 + 120 de gasolina para a carga
         # E todos gastam 75 de uranio para a carga
+        print(f'🔭 - [{self.name}] → 🪨  {self.uranium}/{self.constraints[0]} URANIUM  ⛽ {self.fuel}/{self.constraints[1]}  🚀 {self.rockets}/{self.constraints[2]}')
         return (self.fuel > (115+120) or self.fuel > (100+120)) and self.uranium > 75
 
     def _send_rocket_to_moon(self, rockets_executer) -> None:
@@ -160,16 +159,17 @@ class SpaceBase(Thread):
             self.uranium -= 75
             bases = globals.get_bases_ref()
             rockets_executer.submit(rocket_lion.launch(self, bases['moon']))
-            sleep(0.1)
             self.rockets -= 1
+            sleep(0.1)
 
     # FALCON/DRAGON -> PLANET #
     def _send_rocket_terraform(self, rocket_type, rockets_executer):
-        self.base_rocket_resources(rocket_type)
-        self.rockets += 1
-        rocket = Rocket(rocket_type)
-        target = choice(['mars', 'io', 'ganimedes', 'europa'])
-        planets = globals.get_planets_ref()
-        rockets_executer.submit(rocket.launch(self, planets[target]))
-        sleep(0.1)
-        self.rockets -= 1
+        if self._has_resources_to_launch():
+            self.base_rocket_resources(rocket_type)
+            self.rockets += 1
+            rocket = Rocket(rocket_type)
+            target = choice(['mars', 'io', 'ganimedes', 'europa'])
+            planets = globals.get_planets_ref()
+            rockets_executer.submit(rocket.launch(self, planets[target]))
+            self.rockets -= 1
+            sleep(0.1)
