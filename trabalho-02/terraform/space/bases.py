@@ -2,6 +2,7 @@ import globals
 from threading import Thread
 from space.rocket import Rocket
 from random import choice
+from time import sleep
 
 class SpaceBase(Thread):
 
@@ -113,15 +114,16 @@ class SpaceBase(Thread):
                     self.refuel_oil()
 
                 if self.rockets < self.constraints[2]:
-                    # Prioridade de envio de foguete é para a Lua
-                    lock_moon = globals.get_moon_mutex()
-                    with lock_moon:
-                        if not globals.get_moon_has_resources():
-                            self._send_rocket_to_moon()
-                    
-                    # Envia foguetes para alvos de terraformação
-                    rocket_to_launch = choice(['DRAGON', 'FALCON'])
-                    self._send_rocket_terraform(rocket_to_launch)
+                    with globals.get_rockets_executer() as rockets_executer:
+                        # Prioridade de envio de foguete é para a Lua
+                        lock_moon = globals.get_moon_mutex()
+                        with lock_moon:
+                            if not globals.get_moon_has_resources():
+                                self._send_rocket_to_moon(rockets_executer)
+                        
+                        # Envia foguetes para alvos de terraformação
+                        rocket_to_launch = choice(['DRAGON', 'FALCON'])
+                        self._send_rocket_terraform(rocket_to_launch, rockets_executer)
 
 
             else:
@@ -146,7 +148,7 @@ class SpaceBase(Thread):
         # E todos gastam 75 de uranio para a carga
         return (self.fuel > (115+120) or self.fuel > (100+120)) and self.uranium > 75
 
-    def _send_rocket_to_moon(self) -> None:
+    def _send_rocket_to_moon(self, rockets_executer) -> None:
         if self._has_resources_to_launch():
             self.base_rocket_resources('LION')
             self.rockets += 1
@@ -156,12 +158,18 @@ class SpaceBase(Thread):
             rocket_lion.uranium_cargo = 75
             self.fuel -= 120
             self.uranium -= 75
-            rocket_lion.launch(self, globals.get_bases_ref()['moon'])
+            bases = globals.get_bases_ref()
+            rockets_executer.submit(rocket_lion.launch(self, bases['moon']))
+            sleep(0.1)
+            self.rockets -= 1
 
     # FALCON/DRAGON -> PLANET #
-    def _send_rocket_terraform(self, rocket_type):
+    def _send_rocket_terraform(self, rocket_type, rockets_executer):
         self.base_rocket_resources(rocket_type)
         self.rockets += 1
         rocket = Rocket(rocket_type)
         target = choice(['mars', 'io', 'ganimedes', 'europa'])
-        rocket.launch(self, globals.get_planets_ref()[target])
+        planets = globals.get_planets_ref()
+        rockets_executer.submit(rocket.launch(self, planets[target]))
+        sleep(0.1)
+        self.rockets -= 1

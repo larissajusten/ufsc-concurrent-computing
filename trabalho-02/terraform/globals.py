@@ -1,4 +1,5 @@
 from threading import Lock
+from concurrent.futures import ThreadPoolExecutor
 
 #  A total alteração deste arquivo é permitida.
 #  Lembre-se de que algumas variáveis globais são setadas no arquivo simulation.py
@@ -92,3 +93,9 @@ def set_moon_has_resources(has_resources):
 def get_moon_has_resources():
     global moon_resources
     return moon_resources
+
+
+rockets_executer = ThreadPoolExecutor()
+def get_rockets_executer():
+    global rockets_executer
+    return rockets_executer
