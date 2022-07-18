@@ -26,33 +26,49 @@ class SpaceBase(Thread):
     def base_rocket_resources(self, rocket_name):
         match rocket_name:
             case 'DRAGON':
-                if self.uranium >= 35:
+                if self.name == 'MOON':
+                    fuel_to_consume =  50
+                elif self.name == 'ALCANTARA':
+                    fuel_to_consume =  70
+                else:    
+                    fuel_to_consume =  100
+
+                if self.uranium >= 35 and self.fuel >= fuel_to_consume:
                     self.uranium = self.uranium - 35
-                    if self.name == 'ALCANTARA' and self.fuel >= 70:
-                        self.fuel = self.fuel - 70
-                    elif self.name == 'MOON' and self.fuel >= 50:
-                        self.fuel = self.fuel - 50
-                    elif (self.name == 'CANAVERAL CAPE' or self.name == 'MOSCOW') and self.fuel >= 100:
-                        self.fuel = self.fuel - 100
+                    self.fuel = self.fuel - fuel_to_consume
+
             case 'FALCON':
-                if self.uranium >= 35:
+                if self.name == 'MOON':
+                    fuel_to_consume =  90
+                elif self.name == 'ALCANTARA':
+                    fuel_to_consume =  100
+                else:    
+                    fuel_to_consume =  120
+
+                if self.uranium >= 35 and self.fuel >= fuel_to_consume:
                     self.uranium = self.uranium - 35
-                    if self.name == 'ALCANTARA' and self.fuel >= 100:
-                        self.fuel = self.fuel - 100
-                    elif self.name == 'MOON' and self.fuel >= 90:
-                        self.fuel = self.fuel - 90
-                    elif (self.name == 'CANAVERAL CAPE' or self.name == 'MOSCOW') and self.fuel >= 120:
-                        self.fuel = self.fuel - 120
+                    self.fuel = self.fuel - fuel_to_consume
+
             case 'LION':
                 # ERRADO: Lion não precisa criar ogiva nuclear com 35 unidades de uranio
                 # self.uranium = self.uranium - 35 
-                if self.name == 'ALCANTARA' and self.fuel >= 100:
-                    self.fuel = self.fuel - 100
-                elif (self.name == 'MOSCOW' or self.name == 'CANAVERAL CAPE') and self.fuel >= 115:
-                        self.fuel = self.fuel - 115
+                
+                if self.name == 'MOON':
+                    return
+                elif self.name == 'ALCANTARA':
+                    fuel_to_consume =  100
+                else:    
+                    fuel_to_consume =  115
+
+                if self.uranium >= 35 and self.fuel >= fuel_to_consume:
+                    self.uranium = self.uranium - 35
+                    self.fuel = self.fuel - fuel_to_consume
             case _:
                 print("Invalid rocket name")
 
+    def fill_moon_resources(self,uranium, fuel):
+        self.uranium += uranium
+        self.fuel += fuel
 
     def refuel_oil(self):
         lock_oil = globals.get_oil_mutex()
@@ -129,7 +145,7 @@ class SpaceBase(Thread):
                 #   seta que ela precisa de recursos
                 lock_moon = globals.get_moon_mutex()
                 with lock_moon:
-                    if self.uranium < 35 and (self.fuel < 90 or self.fuel < 50):
+                    if self.uranium < 35 and self.fuel < 90:
                         globals.set_moon_has_resources(False)
 
 
@@ -138,6 +154,7 @@ class SpaceBase(Thread):
     #########
 
     def _has_unities(self, type): return type.unities > 0
+    
 
     # LION -> MOON #
     def _has_resources_to_launch(self) -> bool:

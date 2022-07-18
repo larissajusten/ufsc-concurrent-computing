@@ -121,7 +121,6 @@ def get_oil_mutex():
 
 lock_moon = Lock()
 
-
 def get_moon_mutex():
     global lock_moon
     return lock_moon

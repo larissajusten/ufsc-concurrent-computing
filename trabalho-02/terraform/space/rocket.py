@@ -26,18 +26,20 @@ class Rocket:
         if self.do_we_have_a_problem(): return
 
         if planet == 'MOON' and self.name == 'LION':
+            sleep(0.005) # Simula tempo de viagem para lua (4 dias)
+            print(f"[CARGO] - The {self.name} ROCKET reached the MOON")
             with globals.get_moon_mutex():
                 globals.set_moon_has_resources(True)
-            self._set_moon_resources(planet)
-            sleep(0.005)
+                self._set_moon_resources(planet)
             return
 
         self.simulation_time_voyage(planet)
         self.nuke(planet)
 
     def _set_moon_resources(self, planet_or_base):
-        planet_or_base.uranium = self.uranium_cargo
-        planet_or_base.fuel = self.fuel_cargo
+        planet_or_base.fill_moon_resources(self.uranium_cargo, self.fuel_cargo)
+        self.uranium_cargo = 0
+        self.fuel_cargo = 0
 
 
 
