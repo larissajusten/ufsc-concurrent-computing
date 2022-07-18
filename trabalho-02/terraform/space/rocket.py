@@ -17,17 +17,20 @@ class Rocket:
             
 
     def nuke(self, planet): # Permitida a alteração - [bomba nuclear/ogiva]
+        '''
+        Bombardeia o planeta com uma bomba nuclear
+        '''
+        # TODO: Implementar o nuke
         self.damage()
         print(f"[EXPLOSION] - The {self.name} ROCKET reached the planet {planet.name} on North Pole")
         print(f"[EXPLOSION] - The {self.name} ROCKET reached the planet {planet.name} on South Pole")
         pass
     
-    def reset_moons_status(self):
-        globals.set_rocket_to_moon(False)
-                         
 
     def voyage(self, planet): # Permitida a alteração (com ressalvas) - [viagem]
-        
+        '''
+        Realiza a viagem do foguete para o destino
+        '''
         # Variavel que verifica se está indo para a lua
         to_moon = (planet.name == 'MOON' and self.name == 'LION')
 
@@ -40,20 +43,24 @@ class Rocket:
             # diz que foguete está indo para lua
             globals.set_rocket_to_moon(True)
 
-            sleep(1) # Simula tempo de viagem para lua (4 dias)
+            sleep(0.011) # Simula tempo de viagem para lua (4 dias) (1 ano = 1 segundo de simulação -> 4 dias = 0,011 segundos)
             print(f"[CARGO] - The {self.name} ROCKET reached the MOON")
-            self._set_moon_resources(planet)
-            self.reset_moons_status()
+            self._set_moon_resources(planet) # Preenche o recursos da lua
+            globals.set_rocket_to_moon(False)
             return
 
-        self.simulation_time_voyage(planet)
-        self.nuke(planet)
+        # se não for pra lua
+        self.simulation_time_voyage(planet) # Simula tempo de viagem
+        self.nuke(planet) # Bombardeia o Planeta
 
     def _set_moon_resources(self, planet_or_base):
-        planet_or_base.fill_moon_resources(self.uranium_cargo, self.fuel_cargo)
-        planet_or_base.print_space_base_info()
-        self.uranium_cargo = 0
-        self.fuel_cargo = 0
+        '''
+        Preenche os recursos da lua
+        '''
+        planet_or_base.fill_moon_resources(self.uranium_cargo, self.fuel_cargo) # Preenche os recursos da lua
+        planet_or_base.print_space_base_info() # Imprime os recursos da lua
+        self.uranium_cargo = 0 # Limpa o recurso de uranio da nave
+        self.fuel_cargo = 0 # Limpa o recurso de combustivel da nave
 
 
 

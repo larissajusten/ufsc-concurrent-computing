@@ -98,7 +98,6 @@ def main():
     sleep(0.5)
     print("\n\n##################################### SIMULATION STARTED #####################################\n")
     globals.set_release_system()
-    while(True): pass
 
 if __name__ == "__main__":
     main()

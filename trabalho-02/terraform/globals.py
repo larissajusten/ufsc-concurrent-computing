@@ -120,32 +120,50 @@ def get_oil_mutex():
 
 
 ### Variaveis globais para o controle do carregamento para a Lua
-M_rocket_to_moon = Lock()
+rocket_to_moon_mutex = Lock()
 rocket_to_moon = False
-M_lock_moon = Lock()
-moon_needs_resources = [-1,-1]
+moon_needs_resources_mutex = Lock()
+moon_needs_resources = [-1,-1] # Quantidade de recursos que a lua precisa [uranium, fuel], -1 = muito
 
 def get_moon_mutex():
-    global M_lock_moon
-    return M_lock_moon
+    '''
+    Retorna o mutex dos recursos da lua
+    '''
+    global moon_needs_resources_mutex
+    return moon_needs_resources_mutex
 
 def set_moon_needs_resources(uranium, fuel):
+    '''
+    seta a quantidade de recursos que a lua precisa
+    '''
     global moon_needs_resources
     moon_needs_resources = [uranium, fuel]
 
 def get_moon_needs_resources():
+    '''
+    Retorna a quantidade de recursos que a lua precisa
+    '''
     global moon_needs_resources
     return moon_needs_resources
 
 def get_rocket_to_moon_mutex():
-    global M_rocket_to_moon
-    return M_rocket_to_moon
+    '''
+    Retorna o mutex do foguete de carregamento para a lua
+    '''
+    global rocket_to_moon_mutex
+    return rocket_to_moon_mutex
 
 def get_rocket_to_moon():
+    '''
+    Retorna se tem foguete de carregamento para a lua
+    '''
     global rocket_to_moon
     return rocket_to_moon
 
 def set_rocket_to_moon(rocket):
+    '''
+    Seta se tem foguete de carregamento para a lua
+    '''
     global rocket_to_moon
     rocket_to_moon = rocket
 
@@ -154,5 +172,8 @@ def set_rocket_to_moon(rocket):
 rockets_executer = ThreadPoolExecutor(30)
 
 def get_rockets_executer():
+    '''
+    Retorna o executor dos foguetes
+    '''
     global rockets_executer
     return rockets_executer
