@@ -63,9 +63,12 @@ def get_simulation_time():
     global simulation_time
     return simulation_time
 
+    ##########
+    # EXTRAS #
+    ##########
+
 lock_uranium = Lock()
 lock_oil = Lock()
-
 def get_uranium_mutex():
     global lock_uranium
     return lock_uranium
@@ -74,3 +77,18 @@ def get_oil_mutex():
     global lock_oil
     return lock_oil
 
+
+lock_moon = Lock()
+def get_moon_mutex():
+    global lock_moon
+    return lock_moon
+
+
+moon_resources = False
+def set_moon_has_resources(has_resources):
+    global moon_resources
+    moon_resources = has_resources
+
+def get_moon_has_resources():
+    global moon_resources
+    return moon_resources

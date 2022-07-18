@@ -1,5 +1,6 @@
 from random import randrange, random
 from time import sleep
+import globals
 
 
 class Rocket:
@@ -22,13 +23,21 @@ class Rocket:
         pass
     
     def voyage(self, planet): # Permitida a alteração (com ressalvas) - [viagem]
+        if self.do_we_have_a_problem(): return
 
-        # Essa chamada de código (do_we_have_a_problem e simulation_time_voyage) não pode ser retirada.
-        # Você pode inserir código antes ou depois dela e deve
-        # usar essa função.
+        if planet == 'MOON' and self.name == 'LION':
+            with globals.get_moon_mutex():
+                globals.set_moon_has_resources(True)
+            self._set_moon_resources(planet)
+            sleep(0.005)
+            return
+
         self.simulation_time_voyage(planet)
-        failure =  self.do_we_have_a_problem()
         self.nuke(planet)
+
+    def _set_moon_resources(self, planet_or_base):
+        planet_or_base.uranium = self.uranium_cargo
+        planet_or_base.fuel = self.fuel_cargo
 
 
 
