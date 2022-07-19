@@ -37,5 +37,5 @@ class StoreHouse(Thread):
         while(globals.get_release_system() == False):
             pass
 
-        while(True):
+        while(globals.not_finished()):
             self.produce()

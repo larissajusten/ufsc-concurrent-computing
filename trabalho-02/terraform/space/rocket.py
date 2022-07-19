@@ -1,5 +1,6 @@
-from random import randrange, random
+from random import choice, randrange, random
 from time import sleep
+
 import globals
 
 
@@ -14,18 +15,22 @@ class Rocket:
         if(self.name == 'LION'):
             self.fuel_cargo = 0
             self.uranium_cargo = 0
-            
+         
 
     def nuke(self, planet): # Permitida a alteração - [bomba nuclear/ogiva]
         '''
         Bombardeia o planeta com uma bomba nuclear
         '''
-        # TODO: Implementar o nuke
-        self.damage()
-        print(f"[EXPLOSION] - The {self.name} ROCKET reached the planet {planet.name} on North Pole")
-        print(f"[EXPLOSION] - The {self.name} ROCKET reached the planet {planet.name} on South Pole")
-        pass
-    
+        globals.get_planets_dict_locks()[planet.name.lower()].acquire()
+        planet.terraform -= 100#self.damage()
+        globals.get_planets_dict_locks()[planet.name.lower()].release()
+
+        # Libera polo depois de dar dano no planeta
+        globals.get_planets_dict_poles_semaphore()[planet.name.lower()].release()
+
+        pole_to_nuke = choice(['North', 'South'])
+        print(f"[EXPLOSION] - The {self.name} ROCKET reached the planet {planet.name} on {pole_to_nuke} Pole")
+
 
     def voyage(self, planet): # Permitida a alteração (com ressalvas) - [viagem]
         '''
@@ -40,34 +45,47 @@ class Rocket:
 
         # Se o foguete está indo para a lua
         if to_moon:
-            # diz que foguete está indo para lua
+            # Diz que foguete está indo para lua
+            globals.get_rocket_to_moon_lock().acquire()
             globals.set_rocket_to_moon(True)
+            globals.get_rocket_to_moon_lock().release()
 
-            sleep(0.011) # Simula tempo de viagem para lua (4 dias) (1 ano = 1 segundo de simulação -> 4 dias = 0,011 segundos)
-            print(f"[CARGO] - The {self.name} ROCKET reached the MOON")
+            #sleep(0.011) # Simula tempo de viagem para lua (4 dias) (1 ano = 1 segundo de simulação -> 4 dias = 0,011 segundos)
+            print(f"[CARGO] - The {self.name} ROCKET reached the MOON with ⛽: {self.fuel_cargo} and 🪨: {self.uranium_cargo}")
             self._set_moon_resources(planet) # Preenche o recursos da lua
-            globals.set_rocket_to_moon(False)
-            return
 
+            # Diz que não há foguete indo para lua
+            globals.get_rocket_to_moon_lock().acquire()
+            globals.set_rocket_to_moon(False)
+            globals.get_rocket_to_moon_lock().release()
+            return
+            
         # se não for pra lua
         self.simulation_time_voyage(planet) # Simula tempo de viagem
         self.nuke(planet) # Bombardeia o Planeta
+
+
+    #########
+    # UTILS #
+    #########
+
 
     def _set_moon_resources(self, planet_or_base):
         '''
         Preenche os recursos da lua
         '''
-        planet_or_base.fill_moon_resources(self.uranium_cargo, self.fuel_cargo) # Preenche os recursos da lua
+        globals.get_bases_dict_locks()[planet_or_base.name.lower()].acquire()
+        planet_or_base.fill_base_moon_resources(self.uranium_cargo, self.fuel_cargo) # Preenche os recursos da lua
         planet_or_base.print_space_base_info() # Imprime os recursos da lua
+        globals.get_bases_dict_locks()[planet_or_base.name.lower()].release()
         self.uranium_cargo = 0 # Limpa o recurso de uranio da nave
         self.fuel_cargo = 0 # Limpa o recurso de combustivel da nave
-
 
 
     ####################################################
     #                   ATENÇÃO                        # 
     #     AS FUNÇÕES ABAIXO NÃO PODEM SER ALTERADAS    #
-    ###################################################
+    ####################################################
     def simulation_time_voyage(self, planet):
         if planet.name == 'MARS':
             sleep(2) # Marte tem uma distância aproximada de dois anos do planeta Terra.
@@ -101,5 +119,8 @@ class Rocket:
 
     def launch(self, base, planet):
         if(self.successfull_launch(base)):
-            print(f"[{self.name} - {self.id}] launched.")
+            if(self.name == 'LION'):
+                print(f"[{self.name} - {self.id}] launched from {base.name} with ⛽: {self.fuel_cargo} and 🪨: {self.uranium_cargo}")
+            else:
+                print(f"[{self.name} - {self.id}] launched from {base.name}")
             self.voyage(planet)        
