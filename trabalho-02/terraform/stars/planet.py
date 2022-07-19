@@ -15,7 +15,7 @@ class Planet(Thread):
         '''
         Método que detecta se o nuke foi lançado no planeta
         '''
-        # Ocorreu um bombardeio então pego um polo para usar
+        # Vai ocorrer um bombardeio então pego um polo para usar
         globals.get_planets_dict_poles_semaphore()[self.name.lower()].acquire()
         while(self.terraform > 0):
             before_percentage = self.terraform

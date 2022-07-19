@@ -22,7 +22,7 @@ class Rocket:
         Bombardeia o planeta com uma bomba nuclear
         '''
         globals.get_planets_dict_locks()[planet.name.lower()].acquire()
-        planet.terraform -= 100#self.damage()
+        planet.terraform -= self.damage()
         globals.get_planets_dict_locks()[planet.name.lower()].release()
 
         # Libera polo depois de dar dano no planeta

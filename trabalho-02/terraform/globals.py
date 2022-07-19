@@ -158,7 +158,7 @@ def wait_end():
     release_print()
     return
 
-def not_finished():
+def is_program_not_finished():
     global mutex_running
     if mutex_running.locked():
         return True

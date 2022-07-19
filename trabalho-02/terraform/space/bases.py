@@ -15,7 +15,6 @@ class SpaceBase(Thread):
         self.uranium = 0
         self.fuel = 0
         self.rockets = 0
-        self.total_rockets_sended = 0
         self.constraints = [uranium, fuel, rockets]
 
 
@@ -168,7 +167,7 @@ class SpaceBase(Thread):
                             # Se a lua precisa de recursos, mas nenhum foguete foi enviado, Tenta enviar foguete para lua
                             if globals.get_moon_needs_resources() != [0, 0] and not(globals.get_rocket_to_moon()):
                                 self._send_rocket_to_moon()
-                                self.wait_next_launch() 
+                                self.wait_next_launch()
                                 continue
                             # Se a lua não precisa de recursos, pode enviar foguete normalmente
 
@@ -183,7 +182,6 @@ class SpaceBase(Thread):
                 # seta que ela precisa de recursos
                 with globals.get_moon_lock():
                     if (self.uranium < (self.constraints[0] - 75)) or (self.fuel < (self.constraints[1] - 120)):
-                        #print(f"{self.uranium=},{self.fuel=},{self.constraints[0] - 75},{self.constraints[1] - 120},{(self.uranium < (self.constraints[0] - 75))},{(self.fuel < (self.constraints[1] - 120))}")
                         globals.set_moon_needs_resources(
                             self.constraints[0] - self.uranium, self.constraints[1] - self.fuel)
                     else:
@@ -209,7 +207,7 @@ class SpaceBase(Thread):
         '''
         Espera o tempo necessário para o próximo lançamento
         '''
-        #sleep(0.002)  # Tempo de espera para poder lançar outro foguete (equivalente a 1 dia de simulação, tempo escolhido arbitrariamente)
+        sleep(0.0002)  # Tempo de espera para poder lançar outro foguete (equivalente a 1 dia de simulação, tempo escolhido arbitrariamente)
         pass
 
 
@@ -218,7 +216,6 @@ class SpaceBase(Thread):
         Tenta enviar foguete para a lua
         '''
         if self.base_rocket_resources('LION'):
-            self.total_rockets_sended += 1
             self.rockets += 1
             rocket = Rocket('LION')  # Cria foguete
             base = globals.get_bases_ref()
@@ -246,7 +243,6 @@ class SpaceBase(Thread):
         '''
         if self.base_rocket_resources(rocket_type):
             self.rockets += 1
-            self.total_rockets_sended += 1
             rocket = Rocket(rocket_type)  # Cria foguete
             # Escolhe planeta/luas a ser terraformado
             globals.get_planets_to_terraform_lock().acquire()
